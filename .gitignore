@@ -1,0 +1,27 @@
+# Local environment and dependencies
+venv/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# Secrets (CRITICAL)
+.env
+.env.example
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+.pytest_cache/
+*.log
+
+# Project specific
+brain/
+logs/
+tmp/
+dist/
+.agents/
+.agent/
+_agents/
+_agent/

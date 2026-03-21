@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SEO Agent Analyst</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="extension-wrapper">
+    <!-- Login Screen -->
+    <div id="login-screen" class="hidden">
+       <div class="top-nav">
+          <div class="header-label">Login Required</div>
+       </div>
+       <div class="main-card center">
+          <div class="avatar">👤</div>
+          <h3>Identify Yourself</h3>
+          <p>Please enter your email to sync your SEO reports across devices.</p>
+          <input type="email" id="user-email-input" placeholder="name@company.com" class="styled-input">
+          <button id="login-btn" class="primary-btn">Start Analyzing</button>
+       </div>
+    </div>
+
+    <!-- Main App UI -->
+    <div id="app-ui">
+      <div class="top-nav">
+         <div class="search-bar">
+           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+           <input type="text" id="global-search" class="search-input" placeholder="Search pages or reports...">
+         </div>
+         <div class="window-controls">
+           <svg id="logout-btn" class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" title="Logout"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+         </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-link active" data-tab="agent-tab">SEO Agent</button>
+        <button class="tab-link" data-tab="suggestions-tab">2W Update</button>
+        <button class="tab-link" data-tab="history-tab">History</button>
+      </div>
+
+      <div class="main-card">
+        <!-- Tab 1: SEO Agent -->
+        <div id="agent-tab" class="tab-content">
+          <div class="card-header">
+            <span class="sparkle-icon">✨</span>
+            <span class="header-label">Full Analyst</span>
+            <div class="score-pill" id="score-display">--%</div>
+          </div>
+
+          <div id="initial-state">
+            <div class="profile-row">
+              <div class="avatar">⚡</div>
+              <div class="profile-info">
+                 <h2 id="page-title">Detecting...</h2>
+                 <p id="page-url">Loading URL...</p>
+              </div>
+            </div>
+            <button id="analyze-btn" class="primary-btn">Analyze Content</button>
+          </div>
+
+          <div id="results-area" class="tab-scroll-container hidden">
+            <div class="insights-scroll" id="suggestions-list"></div>
+            <div class="spacer"></div>
+            <button id="learn-btn" class="secondary-btn">Teach AI</button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Suggestions (2W Reports) -->
+        <div id="suggestions-tab" class="tab-content hidden">
+          <div class="card-header">
+            <span class="header-label">Weekly Checkpoints</span>
+          </div>
+          <div id="reports-list" class="list-scroll">
+            <p class="empty-msg">No 2-week reports generated yet.</p>
+          </div>
+        </div>
+
+        <!-- Tab 3: History -->
+        <div id="history-tab" class="tab-content hidden">
+          <div class="card-header">
+            <span class="header-label">Recent Analyses</span>
+          </div>
+          <div id="history-list" class="list-scroll">
+            <p class="empty-msg">No history found.</p>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden">
+          <div class="spinner"></div>
+          <p id="loader-status">Consulting RAG Memory...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
