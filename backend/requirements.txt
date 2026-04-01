@@ -10,5 +10,4 @@ googlesearch-python
 apscheduler
 psycopg2
 pytrends
-fastembed
 gunicorn
