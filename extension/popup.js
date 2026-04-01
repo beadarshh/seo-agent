@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = true;
         btn.innerText = "Processing Data...";
         try {
-            await fetch(`https://seo-writing-agent.onrender.com/api/extension/generate_report/${userEmail}`, { method: 'POST' });
+            await fetch(`https://seo-agent-bq60.onrender.com/api/extension/generate_report/${userEmail}`, { method: 'POST' });
             loadGapAnalysis(userEmail);
         } catch (e) {
             alert("Audit generation failed. Database might be busy.");
@@ -68,7 +68,7 @@ async function loadGapAnalysis(email) {
     const list = document.getElementById('gap-list');
     list.innerHTML = `<p class="empty-msg">Analyzing gaps...</p>`;
     try {
-        const res = await fetch(`https://seo-writing-agent.onrender.com/api/extension/reports/${email}`);
+        const res = await fetch(`https://seo-agent-bq60.onrender.com/api/extension/reports/${email}`);
         const data = await res.json();
         list.innerHTML = "";
         if (!data || data.length === 0) {
@@ -107,7 +107,7 @@ async function loadHistory(email) {
     const list = document.getElementById('history-list');
     list.innerHTML = `<p class="empty-msg">Loading history...</p>`;
     try {
-        const res = await fetch(`https://seo-writing-agent.onrender.com/api/extension/history/${email}`);
+        const res = await fetch(`https://seo-agent-bq60.onrender.com/api/extension/history/${email}`);
         const data = await res.json();
         list.innerHTML = "";
         if (!data || data.length === 0) {
@@ -142,7 +142,7 @@ async function viewHistoryDetails(item) {
     list.innerHTML = `<p class="empty-msg">Retrieving recommendations...</p>`;
 
     try {
-        const res = await fetch(`https://seo-writing-agent.onrender.com/api/extension/page_suggestions/${item.id}`);
+        const res = await fetch(`https://seo-agent-bq60.onrender.com/api/extension/page_suggestions/${item.id}`);
         const data = await res.json();
         currentAnalysisData = { suggestions: data }; // Set for teaching
         renderSuggestions(data);
@@ -188,7 +188,7 @@ function attachAcceptListeners() {
             const sid = e.target.getAttribute('data-id');
             e.target.innerText = "Accepted ✅";
             e.target.disabled = true;
-            fetch('https://seo-writing-agent.onrender.com/api/extension/accept', {
+            fetch('https://seo-agent-bq60.onrender.com/api/extension/accept', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ suggestion_id: sid })
@@ -227,7 +227,7 @@ document.getElementById('check-text-btn').addEventListener('click', async () => 
     btn.innerText = "Analyzing Content...";
 
     try {
-        const response = await fetch('https://seo-writing-agent.onrender.com/api/content/check_optimization', {
+        const response = await fetch('https://seo-agent-bq60.onrender.com/api/content/check_optimization', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: text })
@@ -313,7 +313,7 @@ document.getElementById('learn-btn').addEventListener('click', () => {
         return;
     }
 
-    fetch('https://seo-writing-agent.onrender.com/api/extension/teach', {
+    fetch('https://seo-agent-bq60.onrender.com/api/extension/teach', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ learned_rule: `Optimizing for: ${highPriority}`, source: "Auto-Ingestion" })

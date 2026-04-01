@@ -20,6 +20,6 @@
     "storage"
   ],
   "host_permissions": [
-    "https://seo-writing-agent.onrender.com/*"
+    "https://seo-agent-bq60.onrender.com/*"
   ]
 }

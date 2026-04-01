@@ -7,9 +7,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Use a placeholder keyword for now or extract from URL/Meta
     const keyword = promptUserForKeywordSnippet(data.url, data.title);
 
-    console.log("DEBUG: Background sending fetch to:", "https://seo-writing-agent.onrender.com/api/extension/analyze");
+    console.log("DEBUG: Background sending fetch to:", "https://seo-agent-bq60.onrender.com/api/extension/analyze");
     
-    fetch('https://seo-writing-agent.onrender.com/api/extension/analyze', {
+    fetch('https://seo-agent-bq60.onrender.com/api/extension/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
