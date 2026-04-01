@@ -1,35 +1,54 @@
-// Listens for a message from the popup to extract data
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  if (request.action === "read_page") {
-    // Extract basic SEO fields
-    const title = document.title || "";
-    
-    // Meta description
-    let metaDesc = "";
-    const metaTag = document.querySelector('meta[name="description"]');
-    if (metaTag) metaDesc = metaTag.getAttribute('content');
+(function() {
+  // Check if listener is already added
+  if (window.hasSeoAgentListener) return;
+  window.hasSeoAgentListener = true;
 
-    // Headings
-    const h1s = Array.from(document.querySelectorAll('h1')).map(el => el.innerText.trim());
-    const h2s = Array.from(document.querySelectorAll('h2')).map(el => el.innerText.trim());
+  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.action === "read_page") {
+      try {
+        const title = document.title || "";
+        
+        const metaTags = {};
+        Array.from(document.getElementsByTagName('meta')).forEach(tag => {
+          const name = tag.getAttribute('name') || tag.getAttribute('property');
+          const content = tag.getAttribute('content');
+          if (name && content) metaTags[name] = content;
+        });
 
-    // Main text content extraction
-    // We include more structural tags and increase character limit
-    const paragraphs = Array.from(document.querySelectorAll('p, li, span, h2, h3, h4, blockquote, div.main, article'))
-                           .map(el => el.innerText.trim())
-                           .filter(text => text.length > 15);
-    
-    let fullContent = paragraphs.join("\n");
-    if (fullContent.length > 10000) fullContent = fullContent.substring(0, 10000); 
+        const headings = {
+          h1: Array.from(document.querySelectorAll('h1')).map(el => el.innerText.trim()).filter(t => t),
+          h2: Array.from(document.querySelectorAll('h2')).map(el => el.innerText.trim()).filter(t => t),
+          h3: Array.from(document.querySelectorAll('h3')).map(el => el.innerText.trim()).filter(t => t),
+          h4: Array.from(document.querySelectorAll('h4')).map(el => el.innerText.trim()).filter(t => t),
+        };
 
-    sendResponse({
-      title: title,
-      metaDesc: metaDesc,
-      headings: {
-        h1: h1s,
-        h2: h2s
-      },
-      content: fullContent
-    });
-  }
-});
+        const allTextElements = Array.from(document.querySelectorAll('p, li, span, h1, h2, h3, h4, h5, h6, blockquote, div, article, section, header, footer'))
+                               .map(el => ({
+                                 tag: el.tagName.toLowerCase(),
+                                 text: el.innerText.trim(),
+                                 length: el.innerText.trim().length
+                               }))
+                               .filter(item => item.length > 2); // Lower threshold to catch almost everything
+        
+        const fullContent = allTextElements.map(item => item.text).join("\n\n").substring(0, 50000); 
+        const images = Array.from(document.querySelectorAll('img')).map(img => ({
+          src: img.src,
+          alt: img.alt || ""
+        }));
+
+        sendResponse({
+          title: title,
+          metaTags: metaTags,
+          headings: headings,
+          content: fullContent,
+          elements: allTextElements,
+          images: images,
+          url: window.location.href
+        });
+      } catch (e) {
+        sendResponse({ error: e.message });
+      }
+    }
+  });
+})();
+

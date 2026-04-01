@@ -18,7 +18,7 @@
           <h3>Identify Yourself</h3>
           <p>Please enter your email to sync your SEO reports across devices.</p>
           <input type="email" id="user-email-input" placeholder="name@company.com" class="styled-input">
-          <button id="login-btn" class="primary-btn">Start Analyzing</button>
+          <button id="login-btn" class="primary-btn" style="margin-top: 16px;">Start Analyzing</button>
        </div>
     </div>
 
@@ -37,7 +37,8 @@
       <!-- Tab Navigation -->
       <div class="tabs-nav">
         <button class="tab-link active" data-tab="agent-tab">SEO Agent</button>
-        <button class="tab-link" data-tab="suggestions-tab">2W Update</button>
+        <button class="tab-link" data-tab="deep-check-tab">Optimizer</button>
+        <button class="tab-link" data-tab="gap-tab">Gap Check</button>
         <button class="tab-link" data-tab="history-tab">History</button>
       </div>
 
@@ -68,13 +69,40 @@
           </div>
         </div>
 
-        <!-- Tab 2: Suggestions (2W Reports) -->
-        <div id="suggestions-tab" class="tab-content hidden">
+        <!-- Tab: Deep Check -->
+        <div id="deep-check-tab" class="tab-content hidden">
           <div class="card-header">
-            <span class="header-label">Weekly Checkpoints</span>
+            <span class="header-label">Content Optimizer</span>
           </div>
-          <div id="reports-list" class="list-scroll">
-            <p class="empty-msg">No 2-week reports generated yet.</p>
+          <div class="deep-check-container">
+            <p class="description">Test if your text is an **Attention Grabber** or **SEO Optimized**.</p>
+            <textarea id="deep-check-input" class="styled-textarea" placeholder="Paste your paragraph or headline here..."></textarea>
+            <button id="check-text-btn" class="primary-btn">Analyze Optimization</button>
+            <div id="deep-check-results" class="hidden">
+              <div class="result-stats">
+                <div class="stat-box">
+                  <span class="stat-label">Attention</span>
+                  <div class="stat-bar"><div id="attention-bar" class="bar-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-label">SEO</span>
+                  <div class="stat-bar"><div id="seo-bar" class="bar-fill" style="width: 0%"></div></div>
+                </div>
+              </div>
+              <div id="deep-check-feedback" class="feedback-text"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Gap Check (2-Week Check) -->
+        <div id="gap-tab" class="tab-content hidden">
+          <div class="card-header">
+            <span class="header-label">2-Week Performance Gap</span>
+          </div>
+          <p class="description" style="margin: -8px 0 12px 0; font-size: 11px;">Comparing your current content against elite SEO standard benchmarks.</p>
+          <button id="generate-gap-btn" class="secondary-btn" style="margin-bottom: 12px;">Generate New Analysis</button>
+          <div id="gap-list" class="list-scroll">
+            <p class="empty-msg">Generating gap analysis...</p>
           </div>
         </div>
 

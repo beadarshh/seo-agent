@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
-from models.schemas import ContentRequest, WritingAnalysisResponse
-from services.writing_service import analyse_content_for_writing
+from models.schemas import ContentRequest, WritingAnalysisResponse, OptimizationCheckRequest, OptimizationCheckResponse
+from services.writing_service import analyse_content_for_writing, check_content_optimization
 from services.scheduler_service import manually_trigger_analysis
 from db.database import get_supabase
 import uuid
@@ -15,10 +15,15 @@ async def save_content(request: ContentRequest):
     # Save or update page
     existing = supabase.table("pages").select("*").eq("url", request.url).execute()
     
+    # Meta description can be passed explicitly or taken from tags
+    meta_desc = request.meta_description
+    if not meta_desc and request.meta_tags:
+        meta_desc = request.meta_tags.get("description") or request.meta_tags.get("og:description")
+
     page_data = {
         "url": request.url,
         "title": request.title,
-        "meta_description": request.meta_description,
+        "meta_description": meta_desc,
         "content": request.content,
         "target_keyword": request.target_keyword,
         "headings": request.headings,
@@ -36,14 +41,24 @@ async def save_content(request: ContentRequest):
     analysis = await analyse_content_for_writing(
         page_id=page_id,
         title=request.title,
-        meta=request.meta_description,
+        meta=meta_desc,
         content=request.content,
         headings=request.headings,
-        keyword=request.target_keyword
+        keyword=request.target_keyword,
+        metadata={
+            "meta_tags": request.meta_tags,
+            "elements": request.elements,
+            "images": request.images
+        }
     )
     
     supabase.table("pages").update({"seo_score": analysis.seo_score}).eq("id", page_id).execute()
     return analysis
+
+@router.post("/check_optimization", response_model=OptimizationCheckResponse)
+async def check_optimization(request: OptimizationCheckRequest):
+    result = await check_content_optimization(request.text)
+    return result
 
 @router.post("/{page_id}/publish")
 async def publish_content(page_id: str):

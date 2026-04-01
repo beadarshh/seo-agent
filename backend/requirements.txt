@@ -11,3 +11,4 @@ apscheduler
 psycopg2
 pytrends
 fastembed
+gunicorn

@@ -110,70 +110,84 @@ async def get_llm_writing_suggestions(
     headings: Dict,
     keyword: str,
     word_count: int,
-    keyword_density: float
+    keyword_density: float,
+    metadata: Dict = None
 ) -> List[WritingSuggestion]:
     """Ask Groq for deep writing + SEO suggestions."""
 
     # Build a content summary to save tokens (Groq is fast but has limits)
-    content_preview = content[:2000] + "..." if len(content) > 2000 else content
+    content_preview = content[:3000] + "..." if len(content) > 3000 else content
     headings_str = json.dumps(headings, indent=2)
+    meta_tags_str = json.dumps(metadata.get("meta_tags", {}) if metadata else {}, indent=2)
+    elements_summary = json.dumps(metadata.get("elements", [])[:20] if metadata else [], indent=2)
 
     prompt = f"""You are an expert SEO content editor. Analyse this content and give specific, actionable improvement suggestions.
+You have access to the whole page metadata, including tags and elements.
 
 CONTENT DETAILS:
 - Title: {title}
 - Meta description: {meta or "MISSING"}
+- Meta Tags: {meta_tags_str}
 - Target keyword: {keyword}
 - Word count: {word_count}
 - Keyword density: {keyword_density}%
 - Headings: {headings_str}
+- Elements (first 20): {elements_summary}
 - Content preview: {content_preview}
 
 SEO BENCHMARKS TO CHECK:
-1. Keyword in first 100 words of content?
-2. Is keyword density between 1-2%? (under = weak, over = stuffing)
-3. Are H2s descriptive and keyword-related?
-4. Does the content cover the topic comprehensively?
-5. Are there any missing semantic/LSI keywords for '{keyword}'?
-6. Is there a clear call-to-action?
-7. Sentence length variety (mix short and long)?
+1. TITLE OPTIMIZATION: If the title is boring or weak, suggest a high-CTR, punchy rewrite with the keyword near the start.
+2. H1/H2 HIERARCHY: Check if headings follow a logical structure and use descriptive subheadings.
+3. PARAGRAPH BREVITY: If any paragraph > 60 words, suggest a specific split or rewrite.
+4. SOCIAL & TECHNICAL TAG AUDIT: Audit OG/Twitter tags (OpenGraph), Robots tag, and Canonical tags from provided Meta Tags. If they are missing or have generic content, suggest specific improvements.
+5. IMAGES & ALT TEXT: Suggest ALT tags for specific images found in elements. 
+6. CTA & ENGAGEMENT: Is there an obvious "Next Step" or offer for the reader?
+7. KEYWORD PROXIMITY: Is '{keyword}' used naturally in the first 100 words?
 
-Return ONLY valid JSON array (no markdown, no explanation outside JSON):
+Return ONLY valid JSON array:
 [
   {{
-    "suggestion_type": "title|meta|heading|keyword_density|content_depth|readability|cta",
+    "suggestion_type": "title|meta|heading|keyword_density|content_depth|readability|cta|para_length|tags|og_tags|images",
     "priority": "high|medium|low",
-    "current_value": "what is currently there",
-    "suggested_value": "specific improved version",
-    "reason": "why this change will help SEO in plain English"
+    "current_value": "...",
+    "suggested_value": "...",
+    "reason": "..."
   }}
 ]
 
-Give 3-7 suggestions. Focus on HIGH priority items first. Be specific — suggest actual rewritten titles/sentences, not vague advice."""
+Give 6-12 high-quality, actionable suggestions. ALWAYS suggest a better Title and Meta Description if the current ones aren't elite. Audit social tags for high-CTR sharing. Be extremely specific.
+"""
 
     response = client.chat.completions.create(
         model=settings.GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=2000,
+        temperature=0.1,
+        max_tokens=2500,
     )
 
     raw = response.choices[0].message.content.strip()
-
-    # Clean up if model adds markdown fences
-    raw = re.sub(r"```json\s*|\s*```", "", raw).strip()
+    
+    # Robustly find the JSON array pattern
+    json_match = re.search(r'\[\s*\{.*\}\s*\]', raw, re.DOTALL)
+    if json_match:
+        raw_json = json_match.group(0)
+    else:
+        # Fallback to previous cleaning
+        raw_json = re.sub(r"```json\s*|\s*```", "", raw).strip()
 
     try:
-        suggestions_data = json.loads(raw)
-        return [WritingSuggestion(**s) for s in suggestions_data]
-    except json.JSONDecodeError:
-        # Fallback if LLM returns something unexpected
+        suggestions_data = json.loads(raw_json)
+        if not isinstance(suggestions_data, list):
+            suggestions_data = [suggestions_data]
+        return [WritingSuggestion(**s) for s in suggestions_data if isinstance(s, dict)]
+    except Exception as e:
+        print(f"ERROR: LLM JSON Parse Failed: {e} | Raw: {raw[:500]}")
         return [WritingSuggestion(
-            suggestion_type="content_depth",
-            priority="medium",
+            suggestion_type="System",
+            priority="low",
             current_value="",
             suggested_value="",
-            reason="LLM analysis unavailable — check your Groq API key."
+            reason="The AI auditor provided an irregular response format. Please try one more time."
         )]
 
 async def analyse_content_for_writing(
@@ -182,7 +196,8 @@ async def analyse_content_for_writing(
     meta: str,
     content: str,
     headings: Dict,
-    keyword: str
+    keyword: str,
+    metadata: Dict = None
 ) -> WritingAnalysisResponse:
     """Full writing analysis — called immediately when content is saved."""
 
@@ -195,7 +210,7 @@ async def analyse_content_for_writing(
 
     # Get LLM suggestions
     llm_suggestions = await get_llm_writing_suggestions(
-        title, meta, content, headings, keyword, word_count, keyword_density
+        title, meta, content, headings, keyword, word_count, keyword_density, metadata
     )
 
     # Calculate overall SEO score
@@ -218,3 +233,35 @@ async def analyse_content_for_writing(
         meta_analysis=meta_analysis,
         heading_analysis=heading_analysis,
     )
+
+async def check_content_optimization(text: str) -> Dict[str, Any]:
+    """Compare 'Attention Grabber' vs 'SEO Optimized' quality of a snippet."""
+    prompt = f"""Analyse this text snippet and score it on two scales (0-100):
+1. **Attention Grabber**: Use of curiosity, strong verbs, emotional triggers, hooks.
+2. **SEO Optimized**: Use of keywords naturally, clarity, relevance to search intent.
+
+TEXT: "{text}"
+
+Return ONLY valid JSON:
+{{
+  "attention_score": 00,
+  "seo_score": 00,
+  "feedback": "Why these scores? Short 2-sentence explanation."
+}}
+"""
+    response = client.chat.completions.create(
+        model=settings.GROQ_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+        max_tokens=500,
+    )
+    raw = response.choices[0].message.content.strip()
+    raw = re.sub(r"```json\s*|\s*```", "", raw).strip()
+    try:
+        return json.loads(raw)
+    except:
+        return {
+            "attention_score": 50,
+            "seo_score": 50,
+            "feedback": "Analysis failed to parse."
+        }
